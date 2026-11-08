@@ -1,0 +1,132 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>DevOps Manual Testing Lab - Login</title>
+<style>
+  * { box-sizing: border-box; }
+  body { font-family: Arial, sans-serif; background: #eef2f7; margin: 0; min-height: 100vh; display: flex; align-items: center; justify-content: center; }
+  .card { background: #fff; width: 340px; padding: 28px; border-radius: 10px; box-shadow: 0 4px 16px rgba(0,0,0,.12); }
+  h1 { font-size: 22px; margin: 0 0 18px; text-align: center; }
+  label { display: block; font-size: 14px; margin: 12px 0 4px; }
+  input { width: 100%; padding: 10px; border: 1px solid #b8c0cc; border-radius: 6px; font-size: 14px; }
+  .pw-row { display: flex; gap: 6px; }
+  .pw-row button { width: 70px; }
+  button { padding: 10px; border: 0; border-radius: 6px; background: #2563eb; color: #fff; font-size: 14px; cursor: pointer; }
+  button.secondary { background: #64748b; }
+  #loginBtn { width: 100%; margin-top: 18px; }
+  .error { color: #b91c1c; font-size: 13px; margin-top: 12px; min-height: 18px; }
+  .hint { color: #64748b; font-size: 12px; margin-top: 14px; text-align: center; }
+  #dashboard { display: none; text-align: center; }
+</style>
+</head>
+<body>
+<div class="card">
+
+  <div id="loginView">
+    <h1>Sign In</h1>
+    <form id="loginForm" novalidate>
+      <label for="username">Username</label>
+      <input type="text" id="username" autocomplete="off">
+
+      <label for="password">Password</label>
+      <div class="pw-row">
+        <input type="password" id="password" autocomplete="off">
+        <button type="button" id="toggleBtn" class="secondary">Show</button>
+      </div>
+
+      <button type="submit" id="loginBtn">Login</button>
+      <div class="error" id="error" role="alert"></div>
+    </form>
+    <div class="hint">Test user: admin / Pass@123</div>
+  </div>
+
+  <div id="dashboard">
+    <h1>Dashboard</h1>
+    <p id="welcome"></p>
+    <button type="button" id="logoutBtn">Logout</button>
+  </div>
+
+</div>
+
+<script>
+  var VALID_USER = "admin";
+  var VALID_PASS = "Pass@123";
+  var MAX_ATTEMPTS = 5;
+  var failedAttempts = 0;
+  var locked = false;
+
+  var loginView = document.getElementById("loginView");
+  var dashboard = document.getElementById("dashboard");
+  var errorBox = document.getElementById("error");
+
+  function showDashboard(user) {
+    loginView.style.display = "none";
+    dashboard.style.display = "block";
+    document.getElementById("welcome").textContent = "Welcome, " + user + "!";
+  }
+
+  function showLogin() {
+    dashboard.style.display = "none";
+    loginView.style.display = "block";
+    document.getElementById("username").value = "";
+    document.getElementById("password").value = "";
+    errorBox.textContent = "";
+  }
+
+  // Restore session on page load
+  try {
+    var saved = sessionStorage.getItem("loggedInUser");
+    if (saved) { showDashboard(saved); }
+  } catch (e) {}
+
+  document.getElementById("toggleBtn").addEventListener("click", function () {
+    var pw = document.getElementById("password");
+    pw.type = "password";
+  });
+
+  document.getElementById("loginForm").addEventListener("submit", function (ev) {
+    ev.preventDefault();
+    var user = document.getElementById("username").value.trim();
+    var pass = document.getElementById("password").value;
+
+    if (locked) {
+      errorBox.textContent = "Account locked. Please try again later.";
+      return;
+    }
+
+    if (user === "" && pass === "") {
+      errorBox.textContent = "Username and password are required.";
+      return;
+    }
+    if (user === "") {
+      errorBox.textContent = "Username is required.";
+      return;
+    }
+    if (pass === "") {
+      errorBox.textContent = "Invalid username or password.";
+      return;
+    }
+
+    if (user === VALID_USER && pass === VALID_PASS) {
+      failedAttempts = 0;
+      try { sessionStorage.setItem("loggedInUser", user); } catch (e) {}
+      showDashboard(user);
+    } else {
+      failedAttempts++;
+      if (failedAttempts >= MAX_ATTEMPTS) {
+        locked = true;
+        errorBox.textContent = "Account locked after too many failed attempts.";
+      } else {
+        errorBox.textContent = "Invalid username or password.";
+      }
+    }
+  });
+
+  document.getElementById("logoutBtn").addEventListener("click", function () {
+    showLogin();
+  });
+</script>
+</body>
+</html>
