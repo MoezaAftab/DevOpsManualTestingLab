@@ -1,0 +1,18 @@
+name: Build and Check
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check required files exist
+        run: test -f index.html && test -f README.md
+
+      - name: Check JavaScript syntax
+        run: |
+          python3 -c "import re; s=open('index.html').read(); open('check.js','w').write(re.search(r'<script>(.*?)</script>', s, re.S).group(1))"
+          node --check check.js
